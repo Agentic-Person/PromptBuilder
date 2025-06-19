@@ -1,0 +1,180 @@
+{
+  "name": "Customer Support Automation",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Support Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "support-request",
+        "responseMode": "onReceived",
+        "options": {}
+      }
+    },
+    {
+      "id": "analyzeRequest",
+      "name": "Analyze Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"model\": \"claude-3-sonnet-20240229\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Analyze this customer support request and extract:\\n- Sentiment (0-1 scale)\\n- Category (billing, technical, general)\\n- Urgency (low, medium, high)\\n- Key issues\\n\\nRequest: {{ $json.message }}\\n\\nRespond in JSON format.\"\n    }\n  ],\n  \"max_tokens\": 500\n}"
+      }
+    },
+    {
+      "id": "parseAnalysis",
+      "name": "Parse Analysis",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "parameters": {
+        "functionCode": "// Parse the AI analysis response\nconst response = items[0].json;\nconst content = response.content[0].text;\n\n// Parse JSON from the response\nlet analysis;\ntry {\n  analysis = JSON.parse(content);\n} catch (error) {\n  // Fallback if parsing fails\n  analysis = {\n    sentiment: 0.5,\n    category: 'general',\n    urgency: 'medium',\n    keyIssues: ['Unable to parse response']\n  };\n}\n\n// Add original message to the analysis\nanalysis.originalMessage = $input.first().json.message;\nanalysis.customerId = $input.first().json.customerId;\nanalysis.timestamp = new Date().toISOString();\n\nreturn [{ json: analysis }];"
+      }
+    },
+    {
+      "id": "urgencyRouter",
+      "name": "Route by Urgency",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.urgency }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "high",
+              "output": 0
+            },
+            {
+              "value2": "medium",
+              "output": 1
+            },
+            {
+              "value2": "low",
+              "output": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "highUrgencyResponse",
+      "name": "High Urgency Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1050, 200],
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a senior customer support specialist handling high-priority issues. Be empathetic, professional, and provide immediate assistance.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Customer issue ({{ $json.category }}): {{ $json.originalMessage }}\\n\\nKey issues: {{ $json.keyIssues.join(', ') }}\\n\\nProvide an immediate response that acknowledges urgency and offers help.\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 500\n}"
+      }
+    },
+    {
+      "id": "standardResponse",
+      "name": "Standard Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1050, 300],
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-3.5-turbo\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a helpful customer support agent. Provide clear, friendly assistance.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Customer issue ({{ $json.category }}): {{ $json.originalMessage }}\\n\\nProvide a helpful response.\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 400\n}"
+      }
+    },
+    {
+      "id": "automatedResponse",
+      "name": "Automated Response",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1050, 400],
+      "parameters": {
+        "functionCode": "// Generate automated response for low urgency\nconst templates = {\n  billing: \"Thank you for contacting us about your billing inquiry. We've received your message and will respond within 24-48 hours. In the meantime, you can check your billing history in your account dashboard.\",\n  technical: \"Thank you for reporting this technical issue. We've logged your request and our technical team will investigate. You can expect an update within 24-48 hours.\",\n  general: \"Thank you for reaching out. We've received your message and will respond within 24-48 hours. If you need immediate assistance, please call our support line.\"\n};\n\nconst response = templates[$json.category] || templates.general;\n\nreturn [{\n  json: {\n    response,\n    automated: true,\n    category: $json.category,\n    customerId: $json.customerId\n  }\n}];"
+      }
+    },
+    {
+      "id": "formatResponse",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [1250, 300],
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      }
+    },
+    {
+      "id": "sendResponse",
+      "name": "Send Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1450, 300],
+      "parameters": {
+        "url": "={{ $json.responseUrl || 'https://api.example.com/support/respond' }}",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"customerId\": \"{{ $json.customerId }}\",\n  \"response\": \"{{ $json.choices ? $json.choices[0].message.content : $json.response }}\",\n  \"category\": \"{{ $json.category }}\",\n  \"urgency\": \"{{ $json.urgency }}\",\n  \"automated\": {{ $json.automated || false }},\n  \"timestamp\": \"{{ $json.timestamp }}\"\n}"
+      }
+    }
+  ],
+  "connections": {
+    "webhook": {
+      "main": [[{ "node": "analyzeRequest", "type": "main", "index": 0 }]]
+    },
+    "analyzeRequest": {
+      "main": [[{ "node": "parseAnalysis", "type": "main", "index": 0 }]]
+    },
+    "parseAnalysis": {
+      "main": [[{ "node": "urgencyRouter", "type": "main", "index": 0 }]]
+    },
+    "urgencyRouter": {
+      "main": [
+        [{ "node": "highUrgencyResponse", "type": "main", "index": 0 }],
+        [{ "node": "standardResponse", "type": "main", "index": 0 }],
+        [{ "node": "automatedResponse", "type": "main", "index": 0 }]
+      ]
+    },
+    "highUrgencyResponse": {
+      "main": [[{ "node": "formatResponse", "type": "main", "index": 0 }]]
+    },
+    "standardResponse": {
+      "main": [[{ "node": "formatResponse", "type": "main", "index": 1 }]]
+    },
+    "automatedResponse": {
+      "main": [[{ "node": "formatResponse", "type": "main", "index": 2 }]]
+    },
+    "formatResponse": {
+      "main": [[{ "node": "sendResponse", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

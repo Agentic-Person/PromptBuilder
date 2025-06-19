@@ -1,0 +1,156 @@
+{
+  "name": "Content Moderation Workflow",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "Content Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "path": "content-moderation",
+        "responseMode": "onReceived",
+        "responseData": "allEntries",
+        "responsePropertyName": "data",
+        "options": {}
+      }
+    },
+    {
+      "id": "extractContent",
+      "name": "Extract Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300],
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-3.5-turbo\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Extract and categorize the main content from this post. Include: content type, main topics, language used.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.content }}\"\n    }\n  ],\n  \"temperature\": 0.1,\n  \"max_tokens\": 500\n}"
+      }
+    },
+    {
+      "id": "safetyCheck",
+      "name": "Safety Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [650, 300],
+      "parameters": {
+        "url": "https://api.openai.com/v1/moderations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"input\": \"{{ $json.content }}\"\n}"
+      }
+    },
+    {
+      "id": "scoreCalculation",
+      "name": "Calculate Safety Score",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [850, 300],
+      "parameters": {
+        "functionCode": "// Calculate safety score based on moderation results\nconst moderation = items[0].json.results[0];\nconst categories = moderation.categories;\nconst scores = moderation.category_scores;\n\n// Calculate weighted safety score (0-100, where 100 is safest)\nlet safetyScore = 100;\n\n// Deduct points for each flagged category\nfor (const [category, flagged] of Object.entries(categories)) {\n  if (flagged) {\n    const severity = scores[category] || 0;\n    safetyScore -= Math.min(50, severity * 100);\n  }\n}\n\n// Ensure score stays within bounds\nsafetyScore = Math.max(0, Math.min(100, safetyScore));\n\n// Determine action based on score\nlet action = 'approve';\nif (safetyScore < 50) {\n  action = 'block';\n} else if (safetyScore < 80) {\n  action = 'review';\n}\n\nreturn [{\n  json: {\n    ...items[0].json,\n    safetyScore,\n    action,\n    flaggedCategories: Object.keys(categories).filter(cat => categories[cat]),\n    timestamp: new Date().toISOString()\n  }\n}];"
+      }
+    },
+    {
+      "id": "router",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [1050, 300],
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "approve",
+              "output": 0
+            },
+            {
+              "value2": "review",
+              "output": 1
+            },
+            {
+              "value2": "block",
+              "output": 2
+            }
+          ]
+        },
+        "fallbackOutput": 2
+      }
+    },
+    {
+      "id": "approveAction",
+      "name": "Approve Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 200],
+      "parameters": {
+        "url": "={{ $json.callbackUrl }}/approve",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"contentId\": \"{{ $json.contentId }}\",\n  \"status\": \"approved\",\n  \"safetyScore\": {{ $json.safetyScore }},\n  \"timestamp\": \"{{ $json.timestamp }}\"\n}"
+      }
+    },
+    {
+      "id": "reviewAction",
+      "name": "Flag for Review",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 300],
+      "parameters": {
+        "url": "={{ $json.callbackUrl }}/review",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"contentId\": \"{{ $json.contentId }}\",\n  \"status\": \"pending_review\",\n  \"safetyScore\": {{ $json.safetyScore }},\n  \"flaggedCategories\": {{ JSON.stringify($json.flaggedCategories) }},\n  \"timestamp\": \"{{ $json.timestamp }}\"\n}"
+      }
+    },
+    {
+      "id": "blockAction",
+      "name": "Block Content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1250, 400],
+      "parameters": {
+        "url": "={{ $json.callbackUrl }}/block",
+        "method": "POST",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "={\n  \"contentId\": \"{{ $json.contentId }}\",\n  \"status\": \"blocked\",\n  \"safetyScore\": {{ $json.safetyScore }},\n  \"flaggedCategories\": {{ JSON.stringify($json.flaggedCategories) }},\n  \"explanation\": \"Content violated community guidelines in the following categories: {{ $json.flaggedCategories.join(', ') }}\",\n  \"timestamp\": \"{{ $json.timestamp }}\"\n}"
+      }
+    }
+  ],
+  "connections": {
+    "webhook": {
+      "main": [[{ "node": "extractContent", "type": "main", "index": 0 }]]
+    },
+    "extractContent": {
+      "main": [[{ "node": "safetyCheck", "type": "main", "index": 0 }]]
+    },
+    "safetyCheck": {
+      "main": [[{ "node": "scoreCalculation", "type": "main", "index": 0 }]]
+    },
+    "scoreCalculation": {
+      "main": [[{ "node": "router", "type": "main", "index": 0 }]]
+    },
+    "router": {
+      "main": [
+        [{ "node": "approveAction", "type": "main", "index": 0 }],
+        [{ "node": "reviewAction", "type": "main", "index": 0 }],
+        [{ "node": "blockAction", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

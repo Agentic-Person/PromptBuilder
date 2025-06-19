@@ -1,0 +1,49 @@
+{
+  "name": "prompt-builder",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"No tests configured yet\"",
+    "test:watch": "echo \"No tests configured yet\"",
+    "test:coverage": "echo \"No tests configured yet\""
+  },
+  "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.50.0",
+    "@tanstack/react-query": "^5.80.7",
+    "@trpc/client": "^11.4.1",
+    "@trpc/next": "^11.4.1",
+    "@trpc/react-query": "^11.4.1",
+    "@trpc/server": "^11.4.1",
+    "next": "14.2.30",
+    "react": "^18",
+    "react-dom": "^18",
+    "reactflow": "^11.11.4",
+    "superjson": "^2.2.2",
+    "yjs": "^13.6.27",
+    "zod": "^3.25.67",
+    "zustand": "^5.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.1",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@typescript-eslint/eslint-plugin": "^8.34.1",
+    "@typescript-eslint/parser": "^8.34.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.30",
+    "eslint-config-prettier": "^10.1.5",
+    "postcss": "^8",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
