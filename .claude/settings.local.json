@@ -8,7 +8,15 @@
       "Bash(npx create-next-app:*)",
       "Bash(npm install:*)",
       "Bash(mkdir:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(npm run dev:*)",
+      "Bash(ss:*)",
+      "Bash(hostname:*)",
+      "Bash(pkill:*)",
+      "Bash(npx supabase:*)",
+      "Bash(grep:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

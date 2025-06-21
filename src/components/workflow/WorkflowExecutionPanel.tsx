@@ -67,7 +67,7 @@ export default function WorkflowExecutionPanel({
       
       {/* Input Section */}
       <div className="mb-6">
-        <label htmlFor="input-data" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="input-data" className="block text-sm font-medium text-gray-900 mb-2">
           Input Data (JSON)
         </label>
         <textarea
@@ -85,7 +85,7 @@ export default function WorkflowExecutionPanel({
         disabled={isExecuting || executeWorkflow.isLoading}
         className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
           isExecuting || executeWorkflow.isLoading
-            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            ? 'bg-gray-300 text-gray-900 cursor-not-allowed'
             : 'bg-blue-600 text-white hover:bg-blue-700'
         }`}
       >
@@ -122,7 +122,7 @@ export default function WorkflowExecutionPanel({
                     <p className="text-sm font-medium">
                       {new Date(execution.timestamp).toLocaleString()}
                     </p>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-gray-800 mt-1">
                       ID: {execution.executionId?.slice(0, 8)}...
                     </p>
                   </div>
@@ -136,7 +136,7 @@ export default function WorkflowExecutionPanel({
                 </div>
                 {execution.output && (
                   <details className="mt-2">
-                    <summary className="text-xs text-gray-600 cursor-pointer">
+                    <summary className="text-xs text-gray-800 cursor-pointer">
                       View Output
                     </summary>
                     <pre className="mt-2 text-xs bg-white p-2 rounded overflow-x-auto">

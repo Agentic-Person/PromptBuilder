@@ -75,12 +75,18 @@ export default function Home() {
           />
         </div>
 
-        <div className="text-center mt-16">
+        <div className="text-center mt-16 space-x-4">
           <Link
-            href="/workflow"
+            href="/signup"
             className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"
           >
-            Get Started with Workflow Designer
+            Get Started Free
+          </Link>
+          <Link
+            href="/login"
+            className="inline-block bg-white text-blue-600 border-2 border-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-50 transition-colors"
+          >
+            Sign In
           </Link>
         </div>
       </div>
@@ -92,7 +98,7 @@ function FeatureCard({ title, description, icon }: { title: string; description:
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
       <div className="text-blue-600 mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-600">{description}</p>
     </div>
   );

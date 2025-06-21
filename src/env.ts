@@ -9,6 +9,7 @@ const envSchema = z.object({
   N8N_API_KEY: z.string().default('admin'),
   N8N_BASIC_AUTH_USER: z.string().default('admin'),
   N8N_BASIC_AUTH_PASSWORD: z.string().default('admin'),
+  ENCRYPTION_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
 });
@@ -22,6 +23,7 @@ const processEnv = {
   N8N_API_KEY: process.env.N8N_API_KEY,
   N8N_BASIC_AUTH_USER: process.env.N8N_BASIC_AUTH_USER,
   N8N_BASIC_AUTH_PASSWORD: process.env.N8N_BASIC_AUTH_PASSWORD,
+  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
 };

@@ -37,9 +37,13 @@ export interface PromptBuilderWorkflow {
 }
 
 export class WorkflowTranslator {
+  constructor(private orgId: string) {}
   
   translateToN8n(workflow: PromptBuilderWorkflow): N8nWorkflow {
-    console.log('Translating workflow to n8n format:', workflow.name);
+    console.log('Translating workflow to n8n format:', workflow.name, 'for org:', this.orgId);
+    
+    // Add org prefix to workflow name with timestamp for uniqueness
+    const n8nWorkflowName = `org_${this.orgId}_${workflow.name.replace(/\s+/g, '_')}_${Date.now()}`;
     
     // Add a manual trigger as the first node
     const triggerNode: N8nNode = {
@@ -63,7 +67,7 @@ export class WorkflowTranslator {
     const connections = this.translateConnections(workflow.config.edges, workflow.config.nodes);
 
     return {
-      name: workflow.name,
+      name: n8nWorkflowName,
       nodes: allNodes,
       connections,
       active: false,
@@ -106,6 +110,9 @@ export class WorkflowTranslator {
       return {
         ...baseNode,
         type: 'n8n-nodes-base.httpRequest',
+        credentials: {
+          httpBasicAuth: `org_${this.orgId}_openai`
+        },
         parameters: {
           url: 'https://api.openai.com/v1/chat/completions',
           authentication: 'predefinedCredentialType',
@@ -144,6 +151,9 @@ export class WorkflowTranslator {
       return {
         ...baseNode,
         type: 'n8n-nodes-base.httpRequest',
+        credentials: {
+          httpBasicAuth: `org_${this.orgId}_anthropic`
+        },
         parameters: {
           url: 'https://api.anthropic.com/v1/messages',
           authentication: 'predefinedCredentialType',
@@ -264,7 +274,7 @@ return [{
             }
           },
           credentials: {
-            gmailOAuth2: 'gmail_account'
+            gmailOAuth2: `org_${this.orgId}_gmail`
           }
         };
 
@@ -279,7 +289,7 @@ return [{
             attachments: []
           },
           credentials: {
-            slackOAuth2: 'slack_account'
+            slackOAuth2: `org_${this.orgId}_slack`
           }
         };
 
@@ -379,4 +389,5 @@ return items;
   }
 }
 
-export const workflowTranslator = new WorkflowTranslator();
+// Note: WorkflowTranslator now requires orgId in constructor
+// Usage: const translator = new WorkflowTranslator(orgId);

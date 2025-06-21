@@ -1,6 +1,6 @@
 import { TRPCError } from '@trpc/server';
 import { n8nClient, N8nExecutionResult } from './n8nClient';
-import { workflowTranslator, PromptBuilderWorkflow } from './workflowTranslator';
+import { WorkflowTranslator, PromptBuilderWorkflow } from './workflowTranslator';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '@/env';
 
@@ -41,6 +41,14 @@ export class WorkflowExecutor {
     console.log('Executing workflow:', request.chainId);
     
     try {
+      // Validate org access
+      if (!await this.validateOrgAccess(request.userId, request.orgId)) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'User does not have access to this organization',
+        });
+      }
+      
       // 1. Get the prompt chain from database
       const promptChain = await this.getPromptChain(request.chainId, request.orgId);
       
@@ -48,7 +56,7 @@ export class WorkflowExecutor {
       const execution = await this.createExecutionRecord(request, promptChain);
       
       // 3. Deploy workflow to n8n if needed
-      const n8nWorkflowId = await this.deployToN8n(promptChain);
+      const n8nWorkflowId = await this.deployToN8n(promptChain, request.orgId);
       
       // 4. Execute the workflow
       const n8nResult = await this.executeN8nWorkflow(n8nWorkflowId, request.inputData);
@@ -115,7 +123,7 @@ export class WorkflowExecutor {
     return data;
   }
 
-  private async deployToN8n(promptChain: PromptBuilderWorkflow): Promise<string> {
+  private async deployToN8n(promptChain: PromptBuilderWorkflow, orgId: string): Promise<string> {
     // Check cache first
     const cachedId = this.n8nWorkflowCache.get(promptChain.id);
     if (cachedId) {
@@ -123,6 +131,9 @@ export class WorkflowExecutor {
       return cachedId;
     }
 
+    // Create translator with orgId for multi-tenancy
+    const workflowTranslator = new WorkflowTranslator(orgId);
+    
     // Translate to n8n format
     const n8nWorkflow = workflowTranslator.translateToN8n(promptChain);
     
@@ -343,6 +354,20 @@ export class WorkflowExecutor {
     if (error) {
       console.error('Failed to update hourly metrics:', error);
     }
+  }
+
+  private async validateOrgAccess(userId: string, orgId: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from('profiles')
+      .select('org_id')
+      .eq('id', userId)
+      .single();
+    
+    if (error || !data) {
+      return false;
+    }
+    
+    return data.org_id === orgId;
   }
 
   // Utility methods for testing and management

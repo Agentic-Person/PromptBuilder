@@ -42,7 +42,7 @@ export const organizationRouter = createTRPCRouter({
 
   getMembers: protectedProcedure.query(async ({ ctx }) => {
     const { data, error } = await ctx.supabase
-      .from('users')
+      .from('profiles')
       .select('id, email, role, created_at')
       .eq('org_id', ctx.user.org_id)
       .order('created_at', { ascending: true });

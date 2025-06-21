@@ -13,7 +13,7 @@ const PromptNode = ({ data, selected }: NodeProps<PromptNodeData>) => {
   return (
     <div
       className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${
-        selected ? 'border-blue-500' : 'border-stone-400'
+        selected ? 'border-blue-500' : 'border-gray-300'
       }`}
     >
       <div className="flex">
@@ -34,7 +34,7 @@ const PromptNode = ({ data, selected }: NodeProps<PromptNodeData>) => {
         </div>
         <div className="ml-2">
           <div className="text-lg font-bold">{data.label}</div>
-          <div className="text-gray-500 text-sm">
+          <div className="text-gray-600 text-sm">
             {data.model || 'gpt-3.5-turbo'}
           </div>
         </div>
