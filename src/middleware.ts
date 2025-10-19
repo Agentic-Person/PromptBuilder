@@ -1,56 +1,19 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { Database } from '@/types/database';
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
   
-  // Create a Supabase client configured to use cookies
-  const supabase = createMiddlewareClient<Database>({ req, res });
-
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession();
-
-  // Protected routes that require authentication
-  const protectedRoutes = ['/designer', '/dashboard', '/settings', '/workflows'];
-  const isProtectedRoute = protectedRoutes.some(route => 
-    req.nextUrl.pathname.startsWith(route)
-  );
-
-  // Auth routes that should redirect if already logged in
+  // DEMO MODE: Bypass all authentication for testing
+  console.log('🚀 DEMO MODE: Bypassing authentication for all routes');
+  
+  // Auth routes should redirect to designer in demo mode
   const authRoutes = ['/login', '/signup'];
   const isAuthRoute = authRoutes.includes(req.nextUrl.pathname);
-
-  // If user is not authenticated and trying to access protected route
-  if (!session && isProtectedRoute) {
-    // Temporarily allow access to designer for debugging
-    if (req.nextUrl.pathname === '/designer') {
-      console.log('Allowing unauthenticated access to /designer for debugging');
-      return res;
-    }
-    const redirectUrl = new URL('/login', req.url);
-    redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // If user is authenticated and trying to access auth routes
-  if (session && isAuthRoute) {
+  
+  if (isAuthRoute) {
+    console.log('Redirecting auth route to designer in demo mode');
     return NextResponse.redirect(new URL('/designer', req.url));
-  }
-
-  // For protected routes, check if user record exists
-  if (session && isProtectedRoute && req.nextUrl.pathname !== '/designer') {
-    const { data: user } = await supabase
-      .from('profiles')
-      .select('id, org_id')
-      .eq('id', session.user.id)
-      .single();
-
-    // If user record doesn't exist, redirect to complete setup
-    if (!user || !user.org_id) {
-      return NextResponse.redirect(new URL('/setup', req.url));
-    }
   }
 
   return res;
