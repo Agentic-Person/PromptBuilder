@@ -119,6 +119,10 @@ See [`.env.example`](.env.example) for complete configuration options.
 
 ## 🎨 Demo
 
+### PromptBuilder Application
+
+![PromptBuilder App](public/images/PromptBuilder-app.jpg)
+
 ### Visual Workflow Designer
 
 Create complex AI workflows with an intuitive drag-and-drop interface:
