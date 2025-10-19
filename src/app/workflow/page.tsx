@@ -11,7 +11,7 @@ export default function WorkflowPage() {
         <div className="bg-white rounded-lg shadow-sm h-full">
           <div className="p-4 border-b border-gray-200">
             <h1 className="text-2xl font-semibold text-gray-900">Workflow Designer</h1>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-800 mt-1">
               Create and manage your AI prompt workflows
             </p>
           </div>

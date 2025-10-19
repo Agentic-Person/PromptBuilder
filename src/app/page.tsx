@@ -76,12 +76,26 @@ export default function Home() {
         </div>
 
         <div className="text-center mt-16">
-          <Link
-            href="/workflow"
-            className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"
-          >
-            Get Started with Workflow Designer
-          </Link>
+          {/* Demo Mode Banner */}
+          <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-6 max-w-2xl mx-auto">
+            <p className="text-yellow-800 font-semibold">🚀 Demo Mode Active</p>
+            <p className="text-yellow-700 text-sm">Authentication is bypassed for testing. Click below to explore the workflow designer!</p>
+          </div>
+          
+          <div className="space-x-4">
+            <Link
+              href="/designer"
+              className="inline-block bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"
+            >
+              Try the Designer
+            </Link>
+            <Link
+              href="/workflow"
+              className="inline-block bg-white text-blue-600 border-2 border-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-50 transition-colors"
+            >
+              View Workflows
+            </Link>
+          </div>
         </div>
       </div>
     </div>
@@ -92,7 +106,7 @@ function FeatureCard({ title, description, icon }: { title: string; description:
   return (
     <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
       <div className="text-blue-600 mb-4">{icon}</div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
+      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
       <p className="text-gray-600">{description}</p>
     </div>
   );

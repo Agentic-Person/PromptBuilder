@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 
 const nodeTypes = [
   {
@@ -72,29 +73,57 @@ export default function WorkflowSidebar() {
   };
 
   return (
-    <aside className="bg-white border-r border-gray-200 p-4 w-64">
-      <h3 className="text-lg font-semibold mb-4">Workflow Nodes</h3>
-      <div className="space-y-2">
-        {nodeTypes.map((node) => (
-          <div
-            key={node.type}
-            className="flex items-center p-3 bg-gray-50 rounded-lg cursor-move hover:bg-gray-100 transition-colors"
-            onDragStart={(event) => onDragStart(event, node.type)}
-            draggable
+    <aside className="bg-white border-r border-gray-200 p-4 w-64 flex flex-col">
+      {/* Navigation */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h3>
+        <div className="space-y-2">
+          <Link
+            href="/settings"
+            className="flex items-center p-2 text-sm font-medium text-gray-900 rounded-md hover:bg-gray-100 hover:text-gray-900"
           >
-            <div className={`${node.color} p-2 rounded text-white mr-3`}>
-              {node.icon}
-            </div>
-            <span className="font-medium">{node.label}</span>
-          </div>
-        ))}
+            ⚙️ Configure APIs
+          </Link>
+          <button
+            onClick={() => window.location.reload()}
+            className="flex items-center p-2 text-sm font-medium text-gray-900 rounded-md hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+          >
+            🔄 New Workflow
+          </button>
+          <button
+            className="flex items-center p-2 text-sm font-medium text-gray-900 rounded-md hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+            onClick={() => alert('Execute feature coming soon! Connect your API keys in Settings first.')}
+          >
+            🚀 Execute Workflow
+          </button>
+        </div>
       </div>
-      
-      <div className="mt-8">
-        <h4 className="text-sm font-semibold text-gray-700 mb-2">Instructions</h4>
-        <p className="text-sm text-gray-600">
-          Drag and drop nodes onto the canvas to build your workflow. Connect nodes by dragging from one handle to another.
-        </p>
+
+      {/* Workflow Nodes */}
+      <div className="flex-1">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Workflow Nodes</h3>
+        <div className="space-y-2">
+          {nodeTypes.map((node) => (
+            <div
+              key={node.type}
+              className="flex items-center p-3 bg-gray-50 rounded-lg cursor-move hover:bg-gray-100 transition-colors"
+              onDragStart={(event) => onDragStart(event, node.type)}
+              draggable
+            >
+              <div className={`${node.color} p-2 rounded text-white mr-3`}>
+                {node.icon}
+              </div>
+              <span className="font-medium text-gray-900">{node.label}</span>
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-8">
+          <h4 className="text-sm font-semibold text-gray-900 mb-2">Instructions</h4>
+          <p className="text-sm text-gray-600">
+            Drag and drop nodes onto the canvas to build your workflow. Connect nodes by dragging from one handle to another.
+          </p>
+        </div>
       </div>
     </aside>
   );

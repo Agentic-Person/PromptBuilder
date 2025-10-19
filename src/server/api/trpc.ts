@@ -1,38 +1,41 @@
 import { initTRPC, TRPCError } from '@trpc/server';
-import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
-import { createClient } from '@supabase/supabase-js';
-import { z } from 'zod';
+import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs';
+import { Database } from '@/types/database';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
-
-export const createTRPCContext = async (opts: CreateNextContextOptions) => {
+export const createTRPCContext = async (opts: { req: any; res: any }) => {
   const { req, res } = opts;
   
-  // Get user from session
-  const authHeader = req.headers.authorization;
+  // Create Supabase client for server-side
+  const supabase = createServerSupabaseClient<Database>({ req, res });
+  
+  // Get the current session
+  const { data: { session } } = await supabase.auth.getSession();
+  
   let user = null;
   
-  if (authHeader) {
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user: authUser } } = await supabase.auth.getUser(token);
+  if (session?.user) {
+    // Get the user record with organization info
+    const { data } = await supabase
+      .from('profiles')
+      .select(`
+        *,
+        organizations (
+          id,
+          name,
+          plan,
+          settings
+        )
+      `)
+      .eq('id', session.user.id)
+      .single();
     
-    if (authUser) {
-      const { data } = await supabase
-        .from('users')
-        .select('*, organizations(*)')
-        .eq('id', authUser.id)
-        .single();
-      
-      user = data;
-    }
+    user = data;
   }
 
   return {
     supabase,
     user,
+    session,
     req,
     res,
   };

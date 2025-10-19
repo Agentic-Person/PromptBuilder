@@ -10,7 +10,7 @@ const ValidatorNode = ({ data, selected }: NodeProps<ValidatorNodeData>) => {
   return (
     <div
       className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${
-        selected ? 'border-green-500' : 'border-stone-400'
+        selected ? 'border-green-500' : 'border-gray-300'
       }`}
     >
       <div className="flex">
@@ -31,7 +31,7 @@ const ValidatorNode = ({ data, selected }: NodeProps<ValidatorNodeData>) => {
         </div>
         <div className="ml-2">
           <div className="text-lg font-bold">{data.label}</div>
-          <div className="text-gray-500 text-sm">Validate output</div>
+          <div className="text-gray-600 text-sm">Validate output</div>
         </div>
       </div>
 

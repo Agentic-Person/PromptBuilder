@@ -71,7 +71,7 @@ export default function ExecutionStatus({
       case 'failed':
         return 'text-red-600 bg-red-100';
       default:
-        return 'text-gray-600 bg-gray-100';
+        return 'text-gray-800 bg-gray-100';
     }
   };
 
@@ -131,34 +131,34 @@ export default function ExecutionStatus({
       {/* Execution Details */}
       <div className="space-y-2 text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-600">Execution ID:</span>
+          <span className="text-gray-800">Execution ID:</span>
           <span className="font-mono text-xs">{executionId.slice(0, 8)}...</span>
         </div>
         
         {data?.metrics?.startTime && (
           <div className="flex justify-between">
-            <span className="text-gray-600">Started:</span>
+            <span className="text-gray-800">Started:</span>
             <span>{new Date(data.metrics.startTime).toLocaleTimeString()}</span>
           </div>
         )}
 
         {data?.metrics?.duration && (
           <div className="flex justify-between">
-            <span className="text-gray-600">Duration:</span>
+            <span className="text-gray-800">Duration:</span>
             <span>{(data.metrics.duration / 1000).toFixed(2)}s</span>
           </div>
         )}
 
         {data?.metrics?.tokensUsed && (
           <div className="flex justify-between">
-            <span className="text-gray-600">Tokens Used:</span>
+            <span className="text-gray-800">Tokens Used:</span>
             <span>{data.metrics.tokensUsed}</span>
           </div>
         )}
 
         {data?.metrics?.cost && (
           <div className="flex justify-between">
-            <span className="text-gray-600">Cost:</span>
+            <span className="text-gray-800">Cost:</span>
             <span>${data.metrics.cost.toFixed(4)}</span>
           </div>
         )}
@@ -174,7 +174,7 @@ export default function ExecutionStatus({
       {/* Output Preview */}
       {output && status === 'completed' && (
         <div className="mt-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">Output:</h4>
+          <h4 className="text-sm font-semibold text-gray-900 mb-2">Output:</h4>
           <div className="p-3 bg-gray-50 rounded-md">
             <pre className="text-xs overflow-x-auto">
               {JSON.stringify(output, null, 2)}
